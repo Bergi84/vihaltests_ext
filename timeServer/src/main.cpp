@@ -28,6 +28,14 @@ void timerHandler3(void* aObjP, THwRtc::time_t aTime);
 
 volatile unsigned hbcounter = 0;
 
+void printTime()
+{
+  THwRtc::time_t aktTime;
+  gRtc.getTime(aktTime);
+  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aktTime.hour, aktTime.min, aktTime.sec, aktTime.msec, aktTime.day, aktTime.month, aktTime.year);
+
+}
+
 extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // self_flashing = 1: self-flashing required for RAM-loaded applications
 {
   // after ram setup and region copy the cpu jumps here, with probably RC oscillator
@@ -67,30 +75,30 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	startTime.month = 03;
 	startTime.year = 22;
 	gRtc.setTime(startTime, lastTime);
-  THwRtc::time_t aktTime;
-  gRtc.getTime(aktTime);
+
+	printTime();
 
 	TRACE("\r\n--------------------------------------\r\n");
 	TRACE("%sHello From VIHAL !\r\n", CC_BLU);
 	TRACE("Board: %s\r\n", BOARD_NAME);
 	TRACE("SystemCoreClock: %u\r\n", SystemCoreClock);
 
-
-	TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aktTime.hour, aktTime.min, aktTime.sec, aktTime.msec, aktTime.day, aktTime.month, aktTime.year);
-
+	printTime();
 	uint8_t TimerID[4];
 
 	gTs.init(&gRtc);
 
 	gTs.create(TimerID[0], timerHandler0, 0, true);
-	gTs.create(TimerID[1], timerHandler0, 0, true);
-	gTs.create(TimerID[2], timerHandler0, 0, true);
-	gTs.create(TimerID[3], timerHandler0, 0, true);
-
+	gTs.create(TimerID[1], timerHandler1, 0, true);
+	gTs.create(TimerID[2], timerHandler2, 0, true);
+	gTs.create(TimerID[3], timerHandler3, 0, true);
 	gTs.start(TimerID[0], 10000);
 	gTs.start(TimerID[1], 1000);
 	gTs.start(TimerID[2], 500);
 	gTs.start(TimerID[3], 5000);
+	printTime();
+
+	mcu_enable_interrupts();
 
 	// Infinite loop
 	while (1)
@@ -101,25 +109,25 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 void timerHandler0(void* aObjP, THwRtc::time_t aTime)
 {
-  TRACE("%s Timer0:", CC_RED);
+  TRACE("%sTimer0: ", CC_RED);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
 void timerHandler1(void* aObjP, THwRtc::time_t aTime)
 {
-  TRACE("%s Timer1:", CC_GRN);
+  TRACE("%sTimer1: ", CC_MAG);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
 void timerHandler2(void* aObjP, THwRtc::time_t aTime)
 {
-  TRACE("%s Timer2:", CC_YEL);
+  TRACE("%sTimer2: ", CC_YEL);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
 void timerHandler3(void* aObjP, THwRtc::time_t aTime)
 {
-  TRACE("%s Timer3:", CC_BLU);
+  TRACE("%sTimer3: ", CC_BLU);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
