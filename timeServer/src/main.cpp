@@ -49,20 +49,15 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
   // run the C/C++ initialization (variable initializations, constructors)
   cppinit();
 
-
-  if (!hwclk_init(EXTERNAL_XTAL_HZ, MCU_CLOCK_SPEED))  // if the EXTERNAL_XTAL_HZ == 0, then the internal RC oscillator will be used
-  {
-    while (1)
-    {
-    // error
-    }
-  }
-
 	mcu_enable_fpu();    // enable coprocessor if present
 	mcu_enable_icache(); // enable instruction cache if present
 
 	gClkTree.init();
 	gClkTree.setRtcClkSource(THwClkTree::RTC_LSE);
+	gClkTree.confFlashForSpeed(THwClkTree::hseSpeed*2);
+	gClkTree.setPllClkSource(THwClkTree::PLL_HSE, 8);
+	gClkTree.confPllMain(64, 4, 4, 4);
+	gClkTree.setSysClkSource(THwClkTree::SYS_PLLRCLK);
 
 	clockcnt_init();
 
@@ -70,9 +65,11 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	board_pins_init();
 	gRtc.init();
 
-	uint32_t rtcSpeed;
-	gClkTree.getPeriClkSpeed(gRtc.regs, rtcSpeed);
-	gRtc.setPeriphClock(rtcSpeed);
+	uint32_t speed;
+	gClkTree.getPeriClkSpeed(gRtc.regs, speed);
+	gRtc.setPeriphClock(speed);
+	gClkTree.getPeriClkSpeed(conuart.regs, speed);
+	conuart.SetPeriphClock(speed);
 
 	THwRtc::time_t startTime, lastTime;
 	startTime.msec = 768;
