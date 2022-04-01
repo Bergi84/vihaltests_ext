@@ -12,11 +12,13 @@
 #include "hwpins.h"
 #include "hwuart.h"
 #include "hwrtc.h"
+#include "hwclktree.h"
 
 #include "timeServer.h"
 #include "board_pins.h"
 
 THwRtc gRtc;
+THwClkTree gClkTree;
 
 TTimerServer gTs;
 extern "C" void IRQ_Handler_03() {gTs.serviceQueue();}
@@ -56,16 +58,22 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
     }
   }
 
-  hwlsclk_init(true);
-
 	mcu_enable_fpu();    // enable coprocessor if present
 	mcu_enable_icache(); // enable instruction cache if present
+
+	gClkTree.init();
+	gClkTree.setRtcClkSource(THwClkTree::RTC_LSE);
 
 	clockcnt_init();
 
 	// go on with the hardware initializations
 	board_pins_init();
 	gRtc.init();
+
+	uint32_t rtcSpeed;
+	gClkTree.getPeriClkSpeed(gRtc.regs, rtcSpeed);
+	gRtc.setPeriphClock(rtcSpeed);
+
 	THwRtc::time_t startTime, lastTime;
 	startTime.msec = 768;
 	startTime.sec = 13;
