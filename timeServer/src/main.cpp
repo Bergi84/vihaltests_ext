@@ -83,6 +83,7 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 	printTime();
 
+	gTrace.init();
 	TRACE("\r\n--------------------------------------\r\n");
 	TRACE("%sHello From VIHAL !\r\n", CC_BLU);
 	TRACE("Board: %s\r\n", BOARD_NAME);
@@ -108,7 +109,7 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	// Infinite loop
 	while (1)
 	{
-
+	  gTrace.service();
 	}
 }
 
