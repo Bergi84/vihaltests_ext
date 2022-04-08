@@ -21,12 +21,12 @@ THwRtc gRtc;
 THwClkTree gClkTree;
 
 TTimerServer gTs;
-extern "C" void IRQ_Handler_03() {gTs.serviceQueue();}
+extern "C" void IRQ_Handler_03() {gTs.irqHandler();}
 
-void timerHandler0(void* aObjP, THwRtc::time_t aTime);
-void timerHandler1(void* aObjP, THwRtc::time_t aTime);
-void timerHandler2(void* aObjP, THwRtc::time_t aTime);
-void timerHandler3(void* aObjP, THwRtc::time_t aTime);
+void timerHandler0(THwRtc::time_t aTime);
+void timerHandler1(THwRtc::time_t aTime);
+void timerHandler2(THwRtc::time_t aTime);
+void timerHandler3(THwRtc::time_t aTime);
 
 volatile unsigned hbcounter = 0;
 
@@ -93,10 +93,10 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 	gTs.init(&gRtc);
 
-	gTs.create(TimerID[0], timerHandler0, 0, true);
-	gTs.create(TimerID[1], timerHandler1, 0, true);
-	gTs.create(TimerID[2], timerHandler2, 0, true);
-	gTs.create(TimerID[3], timerHandler3, 0, true);
+	gTs.create(TimerID[0], timerHandler0, true);
+	gTs.create(TimerID[1], timerHandler1, true);
+	gTs.create(TimerID[2], timerHandler2, true);
+	gTs.create(TimerID[3], timerHandler3, true);
 	gTs.start(TimerID[0], 10000);
 	gTs.start(TimerID[1], 1000);
 	gTs.start(TimerID[2], 500);
@@ -112,25 +112,25 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	}
 }
 
-void timerHandler0(void* aObjP, THwRtc::time_t aTime)
+void timerHandler0(THwRtc::time_t aTime)
 {
   TRACE("%sTimer0: ", CC_RED);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
-void timerHandler1(void* aObjP, THwRtc::time_t aTime)
+void timerHandler1(THwRtc::time_t aTime)
 {
   TRACE("%sTimer1: ", CC_MAG);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
-void timerHandler2(void* aObjP, THwRtc::time_t aTime)
+void timerHandler2(THwRtc::time_t aTime)
 {
   TRACE("%sTimer2: ", CC_YEL);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
 }
 
-void timerHandler3(void* aObjP, THwRtc::time_t aTime)
+void timerHandler3(THwRtc::time_t aTime)
 {
   TRACE("%sTimer3: ", CC_BLU);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);

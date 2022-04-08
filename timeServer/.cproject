@@ -44,7 +44,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.freestanding.1286525171" name="Assume freestanding environment (-ffreestanding)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.freestanding" useByScannerDiscovery="true" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.lto.528891379" name="Link-time optimizer (-flto)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.optimization.lto" useByScannerDiscovery="true" value="false" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1393094709" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder buildPath="${workspace_loc:/rolloCon}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.23154544" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder buildPath="${workspace_loc:/rolloCon}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.23154544" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.365994677" name="GNU Arm Cross Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.822351242" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.145919771" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
@@ -63,7 +63,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\armm\STM32\src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\core\src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\modules\timeserver}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\armm\STM32\WB}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\modules\lowPowerManager}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:\${ProjName}\vihal_ext\modules\sequencer}&quot;"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions.758018319" name="Do not use exceptions (-fno-exceptions)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.noexceptions" useByScannerDiscovery="true" value="true" valueType="boolean"/>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti.2024098373" name="Do not use RTTI (-fno-rtti)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.compiler.nortti" useByScannerDiscovery="true" value="true" valueType="boolean"/>
@@ -113,6 +114,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="vihal/core/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="vihal_ext/armm/STM32/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="vihal_ext/core/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="vihal_ext/modules/lowPowerManager"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="vihal_ext/modules/timeserver"/>
 					</sourceEntries>
 				</configuration>
@@ -153,7 +155,11 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="BOARD_DISCOVERY_WB5M">
+			<resource resourceType="PROJECT" workspacePath="/timeServer"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>
