@@ -96,7 +96,7 @@ public:
       }
     }
 
-    if(lpm != 0)
+    if(lpm != 0 && uart->SendFinished())
     {
       lpm->disableLpMode(lpmId, TLowPowerManger::LPM_Run);
     }

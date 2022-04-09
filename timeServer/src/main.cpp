@@ -13,20 +13,24 @@
 #include "hwuart.h"
 #include "hwrtc.h"
 #include "hwclktree.h"
+#include "hwpwr.h"
 
 #include "timeServer.h"
 #include "board_pins.h"
 
 THwRtc gRtc;
 THwClkTree gClkTree;
-
 TTimerServer gTs;
+TLowPowerManger gLpm;
+THwPwr gPwr;
 extern "C" void IRQ_Handler_03() {gTs.irqHandler();}
 
 void timerHandler0(THwRtc::time_t aTime);
 void timerHandler1(THwRtc::time_t aTime);
 void timerHandler2(THwRtc::time_t aTime);
 void timerHandler3(THwRtc::time_t aTime);
+
+void setPowerMode(TLowPowerManger::lpm_t aLpm);
 
 volatile unsigned hbcounter = 0;
 
@@ -52,12 +56,19 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	mcu_enable_fpu();    // enable coprocessor if present
 	mcu_enable_icache(); // enable instruction cache if present
 
+	gPwr.init();
+
 	gClkTree.init();
 	gClkTree.setRtcClkSource(THwClkTree::RTC_LSE);
 	gClkTree.confFlashForSpeed(THwClkTree::hseSpeed*2);
 	gClkTree.setPllClkSource(THwClkTree::PLL_HSE, 8);
 	gClkTree.confPllMain(64, 4, 4, 4);
 	gClkTree.setSysClkSource(THwClkTree::SYS_PLLRCLK);
+	gClkTree.setMsiSpeed(2000000);
+	gClkTree.setSysStopClkSource(THwClkTree::SYS_HSI16);
+
+	gClkTree.setSmpsClkSource(THwClkTree::SMPS_HSI16, true);
+	gPwr.enableSMPS(1750, 220);
 
 	clockcnt_init();
 
@@ -71,6 +82,13 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	gClkTree.getPeriClkSpeed(conuart.regs, speed);
 	conuart.SetPeriphClock(speed);
 
+	gLpm.init(setPowerMode);
+	uint32_t locLpmId;
+	gLpm.registerApp(locLpmId);
+	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_off);
+
+	gTrace.init(0, &gLpm);
+
 	THwRtc::time_t startTime, lastTime;
 	startTime.msec = 768;
 	startTime.sec = 13;
@@ -83,13 +101,14 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 	printTime();
 
-	gTrace.init();
 	TRACE("\r\n--------------------------------------\r\n");
 	TRACE("%sHello From VIHAL !\r\n", CC_BLU);
 	TRACE("Board: %s\r\n", BOARD_NAME);
 	TRACE("SystemCoreClock: %u\r\n", SystemCoreClock);
 
 	printTime();
+
+	// init time server
 	uint8_t TimerID[4];
 
 	gTs.init(&gRtc);
@@ -106,10 +125,13 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 	mcu_enable_interrupts();
 
+	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_Run);
+
 	// Infinite loop
 	while (1)
 	{
 	  gTrace.service();
+	  gLpm.enterLowPowerMode();
 	}
 }
 
@@ -135,6 +157,49 @@ void timerHandler3(THwRtc::time_t aTime)
 {
   TRACE("%sTimer3: ", CC_BLU);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
+}
+
+void setPowerMode(TLowPowerManger::lpm_t aLpm)
+{
+  TCriticalSection cSec(true);
+  switch(aLpm)
+  {
+  case TLowPowerManger::LPM_Run:
+    gPwr.leaveLowPowerRunMode();
+    gClkTree.confFlashForSpeed(THwClkTree::hseSpeed*2);
+    gClkTree.setPllClkSource(THwClkTree::PLL_HSE, 8);
+    gClkTree.confPllMain(64, 4, 4, 4);
+    gClkTree.setSysClkSource(THwClkTree::SYS_PLLRCLK);
+    break;
+
+  case TLowPowerManger::LPM_lpRun:
+    gClkTree.setSysClkSource(THwClkTree::SYS_MSI);
+    gClkTree.confFlashForSpeed(2000000);
+    gPwr.enterLowPowerRunMode();
+    break;
+
+  case TLowPowerManger::LPM_sleep:
+    gPwr.enterLowPowerMode(THwPwr::LPM_SLEEP);
+    break;
+
+  case TLowPowerManger::LPM_deepSleep:
+    gClkTree.confFlashForSpeed(THwClkTree::hseSpeed*2);
+    gClkTree.setSysClkSource(THwClkTree::SYS_HSI16);
+    gClkTree.confFlashForSpeed(THwClkTree::hsi16Speed);
+
+    gPwr.enterLowPowerMode(THwPwr::LPM_STOP2);
+
+    gClkTree.confFlashForSpeed(THwClkTree::hseSpeed*2);
+    gClkTree.setPllClkSource(THwClkTree::PLL_HSE, 8);
+    gClkTree.confPllMain(64, 4, 4, 4);
+    gClkTree.setSysClkSource(THwClkTree::SYS_PLLRCLK);
+    break;
+
+  case TLowPowerManger:: LPM_off:
+    // not supported
+    break;
+  }
+  cSec.leave();
 }
 
 // ----------------------------------------------------------------------------
