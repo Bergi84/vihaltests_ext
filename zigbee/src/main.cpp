@@ -17,6 +17,7 @@
 
 #include "timeServer.h"
 #include "board_pins.h"
+#include "zigbee_stm32wb.h"
 
 THwRtc gRtc;
 THwClkTree gClkTree;
@@ -129,6 +130,8 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	mcu_enable_interrupts();
 
 	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_Run);
+
+  gZigbee.init();
 
 	// Infinite loop
 	while (1)

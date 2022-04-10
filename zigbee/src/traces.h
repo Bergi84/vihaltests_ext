@@ -18,6 +18,8 @@
 extern THwUart conuart;  // console uart
 
 #define TRACE(...) { gTrace.traceCpu1(__VA_ARGS__); }
+#define TRACECPU1(...) { gTrace.traceCpu1(__VA_ARGS__); }
+#define TRACECPU2(...) { gTrace.traceCpu1(__VA_ARGS__); }
 
 #ifdef LTRACES
  #define LTRACE(...)  TRACE( __VA_ARGS__ )

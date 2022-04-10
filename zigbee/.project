@@ -28,7 +28,12 @@
 		<link>
 			<name>STM32_WPAN</name>
 			<type>2</type>
-			<location>D:/Programme/ST/STM32CubeWB_V1.13.1/Middlewares/ST/STM32_WPAN</location>
+			<locationURI>STM32_WPAN_Loc</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>vihal</name>
@@ -40,5 +45,46 @@
 			<type>2</type>
 			<location>D:/Projekte/vihal_ext</location>
 		</link>
+		<link>
+			<name>STM32_WPAN_src/shci.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/shci/shci.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/shci_tl.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/shci_tl.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/shci_tl_if.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/shci_tl_if.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/stm_list.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/utilities/stm_list.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/tl_mbox.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/tl_mbox.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/tl_zigbee_hci.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/tl_zigbee_hci.c</locationURI>
+		</link>
+		<link>
+			<name>STM32_WPAN_src/zigbee_core_wb.c</name>
+			<type>1</type>
+			<locationURI>STM32_WPAN_Loc/zigbee/core/src/zigbee_core_wb.c</locationURI>
+		</link>
 	</linkedResources>
+	<variableList>
+		<variable>
+			<name>STM32_WPAN_Loc</name>
+			<value>file:/D:/Projekte/STM32_WPAN</value>
+		</variable>
+	</variableList>
 </projectDescription>
