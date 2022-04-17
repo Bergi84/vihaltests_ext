@@ -165,6 +165,10 @@ void TTrace::service()
     }
     else
     {
+      if(seq != 0)
+      {
+        seq->queueTask(seqId);
+      }
       return;
     }
   }

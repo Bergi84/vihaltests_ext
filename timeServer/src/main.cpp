@@ -40,7 +40,10 @@ void timerIdleTask1();
 void timerIdleTask2();
 void timerIdleTask3();
 
-bool timerEvt[4];
+uint8_t timerFreeSeqId;
+void timerFreeTask();
+
+bool waiEvt[4];
 THwRtc::time_t evtTime[4];
 
 void setPowerMode(TLowPowerManger::lpm_t aLpm);
@@ -103,7 +106,16 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	gLpm.registerApp(locLpmId);
 	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_off);
 
-	gTrace.init(0, &gLpm);
+  gSeq.init();
+
+  gSeq.addTask(timerSeqId[0], timerIdleTask0);
+  gSeq.addTask(timerSeqId[1], timerIdleTask1);
+  gSeq.addTask(timerSeqId[2], timerIdleTask2);
+  gSeq.addTask(timerSeqId[3], timerIdleTask3);
+  gSeq.addTask(timerFreeSeqId, timerFreeTask);
+  gSeq.setIdleFunc(&gLpm, (void (TCbClass::*)(void)) &TLowPowerManger::enterLowPowerMode);
+
+	gTrace.init(0, &gLpm, &gSeq);
 
 	THwRtc::time_t startTime, lastTime;
 	startTime.msec = 768;
@@ -120,20 +132,14 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	TRACE("\r\n--------------------------------------\r\n");
 	TRACE("%sHello From VIHAL !\r\n", CC_BLU);
 	TRACE("Board: %s\r\n", BOARD_NAME);
-	TRACE("SystemCoreClock: %u\r\n", SystemCoreClock);
+	uint32_t sysSpeed;
+	gClkTree.getSysClkSpeed(sysSpeed);
+	TRACE("SystemCoreClock: %u\r\n", sysSpeed);
 
 	printTime();
 
 	// init time server
 	uint8_t TimerID[4];
-
-	gSeq.init();
-
-	gSeq.addTask(timerSeqId[0], timerIdleTask0);
-	gSeq.addTask(timerSeqId[1], timerIdleTask1);
-	gSeq.addTask(timerSeqId[2], timerIdleTask2);
-	gSeq.addTask(timerSeqId[3], timerIdleTask3);
-	gSeq.setIdleFunc(&gLpm, (void (TCbClass::*)(void)) &TLowPowerManger::enterLowPowerMode);
 
   gTs.init(&gRtc);
 	gTs.create(TimerID[0], timerHandler0, true);
@@ -153,6 +159,8 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	while(1);
 }
 
+
+// functions called from time server after timer elapsed
 void timerHandler0(THwRtc::time_t aTime)
 {
   evtTime[0] = aTime;
@@ -177,6 +185,8 @@ void timerHandler3(THwRtc::time_t aTime)
   gSeq.queueTask(timerSeqId[3]);
 }
 
+
+// functions called from idle sequencer after function was queued
 void timerIdleTask0()
 {
   TRACE("%sTimer0: ", CC_RED);
@@ -185,6 +195,10 @@ void timerIdleTask0()
 
 void timerIdleTask1()
 {
+  waiEvt[0] = false;
+  gSeq.queueTask(timerFreeSeqId);
+  gSeq.waitForEvent(&waiEvt[0]);
+
   TRACE("%sTimer1: ", CC_MAG);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[1].hour, evtTime[1].min, evtTime[1].sec, evtTime[1].msec, evtTime[1].day, evtTime[1].month, evtTime[1].year);
 }
@@ -201,7 +215,15 @@ void timerIdleTask3()
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[3].hour, evtTime[3].min, evtTime[3].sec, evtTime[3].msec, evtTime[3].day, evtTime[3].month, evtTime[3].year);
 }
 
+void timerFreeTask()
+{
+  waiEvt[0] = true;
+  waiEvt[1] = true;
+  waiEvt[2] = true;
+  waiEvt[3] = true;
+}
 
+// power config function for low power manager
 void setPowerMode(TLowPowerManger::lpm_t aLpm)
 {
   TCriticalSection cSec(true);
