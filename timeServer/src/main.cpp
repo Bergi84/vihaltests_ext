@@ -17,18 +17,31 @@
 
 #include "timeServer.h"
 #include "board_pins.h"
+#include "sequencer_armm.h"
 
 THwRtc gRtc;
 THwClkTree gClkTree;
 TTimerServer gTs;
 TLowPowerManger gLpm;
 THwPwr gPwr;
+TSequencer gSeq;
+
 extern "C" void IRQ_Handler_03() {gTs.irqHandler();}
 
 void timerHandler0(THwRtc::time_t aTime);
 void timerHandler1(THwRtc::time_t aTime);
 void timerHandler2(THwRtc::time_t aTime);
 void timerHandler3(THwRtc::time_t aTime);
+
+uint8_t timerSeqId[4];
+
+void timerIdleTask0();
+void timerIdleTask1();
+void timerIdleTask2();
+void timerIdleTask3();
+
+bool timerEvt[4];
+THwRtc::time_t evtTime[4];
 
 void setPowerMode(TLowPowerManger::lpm_t aLpm);
 
@@ -114,8 +127,15 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	// init time server
 	uint8_t TimerID[4];
 
-	gTs.init(&gRtc);
+	gSeq.init();
 
+	gSeq.addTask(timerSeqId[0], timerIdleTask0);
+	gSeq.addTask(timerSeqId[1], timerIdleTask1);
+	gSeq.addTask(timerSeqId[2], timerIdleTask2);
+	gSeq.addTask(timerSeqId[3], timerIdleTask3);
+	gSeq.setIdleFunc(&gLpm, (void (TCbClass::*)(void)) &TLowPowerManger::enterLowPowerMode);
+
+  gTs.init(&gRtc);
 	gTs.create(TimerID[0], timerHandler0, true);
 	gTs.create(TimerID[1], timerHandler1, true);
 	gTs.create(TimerID[2], timerHandler2, true);
@@ -129,38 +149,58 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	mcu_enable_interrupts();
 
 	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_Run);
-
-	// Infinite loop
-	while (1)
-	{
-	  gTrace.service();
-	  gLpm.enterLowPowerMode();
-	}
+	gSeq.startIdle();
+	while(1);
 }
 
 void timerHandler0(THwRtc::time_t aTime)
 {
-  TRACE("%sTimer0: ", CC_RED);
-  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
+  evtTime[0] = aTime;
+  gSeq.queueTask(timerSeqId[0]);
 }
 
 void timerHandler1(THwRtc::time_t aTime)
 {
-  TRACE("%sTimer1: ", CC_MAG);
-  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
+  evtTime[1] = aTime;
+  gSeq.queueTask(timerSeqId[1]);
 }
 
 void timerHandler2(THwRtc::time_t aTime)
 {
-  TRACE("%sTimer2: ", CC_YEL);
-  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
+  evtTime[2] = aTime;
+  gSeq.queueTask(timerSeqId[2]);
 }
 
 void timerHandler3(THwRtc::time_t aTime)
 {
-  TRACE("%sTimer3: ", CC_BLU);
-  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aTime.hour, aTime.min, aTime.sec, aTime.msec, aTime.day, aTime.month, aTime.year);
+  evtTime[3] = aTime;
+  gSeq.queueTask(timerSeqId[3]);
 }
+
+void timerIdleTask0()
+{
+  TRACE("%sTimer0: ", CC_RED);
+  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[0].hour, evtTime[0].min, evtTime[0].sec, evtTime[0].msec, evtTime[0].day, evtTime[0].month, evtTime[0].year);
+}
+
+void timerIdleTask1()
+{
+  TRACE("%sTimer1: ", CC_MAG);
+  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[1].hour, evtTime[1].min, evtTime[1].sec, evtTime[1].msec, evtTime[1].day, evtTime[1].month, evtTime[1].year);
+}
+
+void timerIdleTask2()
+{
+  TRACE("%sTimer2: ", CC_YEL);
+  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[2].hour, evtTime[2].min, evtTime[2].sec, evtTime[2].msec, evtTime[2].day, evtTime[2].month, evtTime[2].year);
+}
+
+void timerIdleTask3()
+{
+  TRACE("%sTimer3: ", CC_BLU);
+  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[3].hour, evtTime[3].min, evtTime[3].sec, evtTime[3].msec, evtTime[3].day, evtTime[3].month, evtTime[3].year);
+}
+
 
 void setPowerMode(TLowPowerManger::lpm_t aLpm)
 {

@@ -12,7 +12,7 @@ TTrace gTrace;
 constexpr const char TTrace::strCpu1[];
 constexpr const char TTrace::strCpu2[];
 
-bool TTrace::init(THwUart* aUart, TLowPowerManger* aLpm)
+bool TTrace::init(THwUart* aUart, TLowPowerManger* aLpm, TSequencer* aSeq)
 {
   if(aUart == 0)
     uart = &conuart;
@@ -23,6 +23,12 @@ bool TTrace::init(THwUart* aUart, TLowPowerManger* aLpm)
   if(lpm != 0)
   {
     lpm->registerApp(lpmId);
+  }
+
+  seq = aSeq;
+  if(aSeq != 0)
+  {
+    aSeq->addTask(seqId, this, (void (TCbClass::*)(void)) &TTrace::service);
   }
 
   bufWInd = 0;
@@ -78,6 +84,11 @@ void TTrace::traceCpu1(const char* format, ...)
   }
 
   cSec.leave();
+
+  if(seq != 0)
+  {
+    seq->queueTask(seqId);
+  }
 }
 
 void TTrace::traceCpu2(const char* format, ...)
@@ -125,4 +136,48 @@ void TTrace::traceCpu2(const char* format, ...)
   }
 
   cSec.leave();
+
+  if(seq != 0)
+  {
+    seq->queueTask(seqId);
+  }
+}
+
+void TTrace::service()
+{
+  while(bufWInd != bufRInd)
+  {
+    if(lpm != 0)
+    {
+      lpm->enableLpMode(lpmId, TLowPowerManger::LPM_Run);
+    }
+
+    if(uart->TrySendChar(buf[bufRInd]))
+    {
+      if(bufRInd == bufLength-1)
+      {
+        bufRInd = 0;
+      }
+      else
+      {
+        bufRInd++;
+      }
+    }
+    else
+    {
+      return;
+    }
+  }
+
+  if(lpm != 0 && uart->SendFinished())
+  {
+    lpm->disableLpMode(lpmId, TLowPowerManger::LPM_Run);
+  }
+  else
+  {
+    if(seq != 0)
+    {
+      seq->queueTask(seqId);
+    }
+  }
 }

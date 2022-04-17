@@ -11,6 +11,7 @@
 
 #include "hwuart.h"
 #include "lowPowerManager.h"
+#include "sequencer_armm.h"
 
 #include "mp_printf.h"
 #include <string.h>
@@ -38,7 +39,7 @@ extern THwUart conuart;  // console uart
 #define CC_CYN  "\x1B[36m"
 #define CC_WHT  "\x1B[37m"
 
-class TTrace
+class TTrace : public TCbClass
 {
 public:
   static constexpr uint32_t bufLength = 1024;
@@ -46,6 +47,8 @@ public:
   THwUart* uart;
   TLowPowerManger* lpm;
   uint32_t lpmId;
+  TSequencer* seq;
+  uint8_t seqId;
 
   char buf[bufLength];
   uint32_t bufWInd;
@@ -65,42 +68,12 @@ public:
   lastAktiv_t lastAktiv;
   bool intend;
 
-  bool init(THwUart* aUart = 0, TLowPowerManger* aLpm = 0);
+  bool init(THwUart* aUart = 0, TLowPowerManger* aLpm = 0, TSequencer* aSeq = 0);
 
   void traceCpu1(const char* format, ...);
   void traceCpu2(const char* format, ...);
 
-  inline void service()
-  {
-    while(bufWInd != bufRInd)
-    {
-      if(lpm != 0)
-      {
-        lpm->enableLpMode(lpmId, TLowPowerManger::LPM_Run);
-      }
-
-      if(uart->TrySendChar(buf[bufRInd]))
-      {
-        if(bufRInd == bufLength-1)
-        {
-          bufRInd = 0;
-        }
-        else
-        {
-          bufRInd++;
-        }
-      }
-      else
-      {
-        return;
-      }
-    }
-
-    if(lpm != 0 && uart->SendFinished())
-    {
-      lpm->disableLpMode(lpmId, TLowPowerManger::LPM_Run);
-    }
-  }
+  void service();
 };
 
 extern TTrace gTrace;
