@@ -71,11 +71,6 @@
 			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/tl_mbox.c</locationURI>
 		</link>
 		<link>
-			<name>STM32_WPAN_src/tl_zigbee_hci.c</name>
-			<type>1</type>
-			<locationURI>STM32_WPAN_Loc/interface/patterns/ble_thread/tl/tl_zigbee_hci.c</locationURI>
-		</link>
-		<link>
 			<name>STM32_WPAN_src/zigbee_core_wb.c</name>
 			<type>1</type>
 			<locationURI>STM32_WPAN_Loc/zigbee/core/src/zigbee_core_wb.c</locationURI>

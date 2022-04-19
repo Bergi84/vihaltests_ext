@@ -205,6 +205,10 @@ void timerIdleTask1()
 
 void timerIdleTask2()
 {
+  waiEvt[1] = false;
+  gSeq.queueTask(timerFreeSeqId);
+  gSeq.waitForEvent(&waiEvt[1]);
+
   TRACE("%sTimer2: ", CC_YEL);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", evtTime[2].hour, evtTime[2].min, evtTime[2].sec, evtTime[2].msec, evtTime[2].day, evtTime[2].month, evtTime[2].year);
 }
