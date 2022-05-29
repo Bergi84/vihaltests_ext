@@ -20,6 +20,8 @@
 #include "zigbee_stm32wb.h"
 #include "sequencer_armm.h"
 
+#include "zDevice.h"
+
 THwRtc gRtc;
 THwClkTree gClkTree;
 TTimerServer gTs;
