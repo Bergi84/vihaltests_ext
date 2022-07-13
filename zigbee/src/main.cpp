@@ -17,7 +17,6 @@
 
 #include "timeServer.h"
 #include "board_pins.h"
-#include "zigbee_stm32wb.h"
 #include "sequencer_armm.h"
 
 #include "zDevice.h"
@@ -28,6 +27,7 @@ TTimerServer gTs;
 TLowPowerManger gLpm;
 THwPwr gPwr;
 TSequencer gSeq;
+TzdBase gZigbee;
 
 extern "C" void IRQ_Handler_03() {gTs.irqHandler();}
 
@@ -41,6 +41,18 @@ void printTime()
   gRtc.getTime(aktTime);
   TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aktTime.hour, aktTime.min, aktTime.sec, aktTime.msec, aktTime.day, aktTime.month, aktTime.year);
 
+}
+
+uint8_t setupZigbeeTaskId;
+
+void setupZigbeeTask()
+{
+  TRACECPU1("init wireless stack\r\n")
+
+  gZigbee.init(&gSeq, &gPwr);
+  gSeq.waitForEvent(&gZigbee.stackInitDone);
+
+  TRACECPU1("init of wireless stack done\r\n");
 }
 
 extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // self_flashing = 1: self-flashing required for RAM-loaded applications
@@ -116,10 +128,16 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
 	gLpm.disableLpMode(locLpmId, TLowPowerManger::LPM_Run);
 
-  gZigbee.init(&gSeq, &gPwr);
+	gSeq.addTask(setupZigbeeTaskId, setupZigbeeTask);
+	gSeq.queueTask(setupZigbeeTaskId);
 
   gSeq.startIdle();
+
+  while(1);
 }
+
+
+
 
 void setPowerMode(TLowPowerManger::lpm_t aLpm)
 {
