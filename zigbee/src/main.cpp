@@ -20,6 +20,8 @@
 #include "sequencer_armm.h"
 
 #include "zDevice.h"
+#include "zEndpoint.h"
+#include "zLibrary.h"
 
 THwRtc gRtc;
 THwClkTree gClkTree;
@@ -35,15 +37,9 @@ void setPowerMode(TLowPowerManger::lpm_t aLpm);
 
 volatile unsigned hbcounter = 0;
 
-void printTime()
-{
-  THwRtc::time_t aktTime;
-  gRtc.getTime(aktTime);
-  TRACE("%02hhu:%02hhu:%02hhu.%03hu %02hhu.%02hhu.%02hhu\r\n", aktTime.hour, aktTime.min, aktTime.sec, aktTime.msec, aktTime.day, aktTime.month, aktTime.year);
-
-}
-
 uint8_t setupZigbeeTaskId;
+TzeBase endPoint1;
+TzcOnOffClient onOffCluster1;
 
 void setupZigbeeTask()
 {
@@ -52,7 +48,28 @@ void setupZigbeeTask()
   gZigbee.init(&gSeq, &gPwr);
   gSeq.waitForEvent(&gZigbee.stackInitDone);
 
-  TRACECPU1("init of wireless stack done\r\n");
+  TRACECPU1("configure stack\r\n");
+
+  // setup basic cluster attributes
+  // must be done before call of config
+  uint8_t maName[] = "Bergi84";
+  gZigbee.setAttrManufacturaName(maName);
+  uint8_t moName[] = "DIY";
+  gZigbee.setAttrModelIdentifier(moName);
+  gZigbee.setAttrHWVersion(2);
+  gZigbee.setAttrAppVersion(1);
+  gZigbee.setAttrStackVersion(10);
+  uint8_t date[] = "14.07.2022";
+  gZigbee.setAttrDateCode(date);
+  uint8_t buildId[] = "test";
+  gZigbee.setAttrSWBuildId(buildId);
+  gZigbee.setAttrPowerSource(4);    // DC Source
+
+  endPoint1.setEpId(17);
+  endPoint1.addCluster(&onOffCluster1);
+  gZigbee.addEndpoint(&endPoint1);
+
+  gZigbee.config();
 }
 
 extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // self_flashing = 1: self-flashing required for RAM-loaded applications
@@ -135,8 +152,6 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 
   while(1);
 }
-
-
 
 
 void setPowerMode(TLowPowerManger::lpm_t aLpm)
