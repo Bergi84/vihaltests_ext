@@ -45,7 +45,7 @@ void setupZigbeeTask()
 {
   TRACECPU1("init wireless stack\r\n")
 
-  gZigbee.init(&gSeq, &gPwr);
+  gZigbee.init(&gSeq, &gPwr, &gTs);
   gSeq.waitForEvent(&gZigbee.stackInitDone);
 
   TRACECPU1("configure stack\r\n");
@@ -65,11 +65,16 @@ void setupZigbeeTask()
   gZigbee.setAttrSWBuildId(buildId);
   gZigbee.setAttrPowerSource(4);    // DC Source
 
+  // setup endpoints and clusters
   endPoint1.setEpId(17);
   endPoint1.addCluster(&onOffCluster1);
   gZigbee.addEndpoint(&endPoint1);
 
   gZigbee.config();
+
+  gZigbee.setDeviceType(TzdBase::DT_Router);
+
+  gZigbee.join();
 }
 
 extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // self_flashing = 1: self-flashing required for RAM-loaded applications
