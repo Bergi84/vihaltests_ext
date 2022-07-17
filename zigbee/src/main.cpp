@@ -14,6 +14,7 @@
 #include "hwrtc.h"
 #include "hwclktree.h"
 #include "hwpwr.h"
+#include "hwintflash.h"
 
 #include "timeServer.h"
 #include "board_pins.h"
@@ -30,6 +31,7 @@ TLowPowerManger gLpm;
 THwPwr gPwr;
 TSequencer gSeq;
 TzdBase gZigbee;
+THwIntFlash gFlash;
 
 extern "C" void IRQ_Handler_03() {gTs.irqHandler();}
 
@@ -53,17 +55,20 @@ void sendNext(THwRtc::time_t time)
 TzcOnOffServer::statusCode_t onOffServerCluster1_onCb(TzcOnOffServer::zAdr_t* adr)
 {
   onOffServerCluster1.setAttrOnOff(true);
+  TRACECPU1("recieved cmd on\r\n");
   return 0;     // ZCL: SUCCESS
 }
 
 TzcOnOffServer::statusCode_t onOffServerCluster1_offCb(TzcOnOffServer::zAdr_t* adr)
 {
   onOffServerCluster1.setAttrOnOff(false);
+  TRACECPU1("recieved cmd off\r\n");
   return 0;     // ZCL: SUCCESS
 }
 
 TzcOnOffServer::statusCode_t onOffServerCluster1_toggleCb(TzcOnOffServer::zAdr_t* adr)
 {
+  TRACECPU1("recieved cmd toggle\r\n");
   bool onOffState;
   onOffServerCluster1.getAttrOnOff(onOffState);
   onOffServerCluster1.setAttrOnOff(!onOffState);
@@ -74,7 +79,7 @@ void setupZigbeeTask()
 {
   TRACECPU1("init wireless stack\r\n")
 
-  gZigbee.init(&gSeq, &gPwr, &gTs);
+  gZigbee.init(&gSeq, &gPwr, &gTs, &gFlash);
   gSeq.waitForEvent(&gZigbee.flagStackInitDone);
 
   TRACECPU1("configure stack\r\n");
@@ -119,9 +124,17 @@ void setupZigbeeTask()
   gZigbee.join();
   gSeq.waitForEvent(&gZigbee.flagJoined);
 
-  // send every 5sec a toggle cmd
+  // it seems the stack needs after a persistent startup 10s or more before it can handle
+  // commands
   uint8_t sendTimer;
   gTs.create(sendTimer, sendNext, true);
+  gTs.start(sendTimer, 15000);
+
+  flagSendNext = false;
+  gSeq.waitForEvent(&flagSendNext);
+
+
+  // send every 5sec a toggle cmd
   gTs.start(sendTimer, 5000);
 
   while(1)
@@ -148,6 +161,8 @@ extern "C" __attribute__((noreturn)) void _start(unsigned self_flashing)  // sel
 	mcu_enable_icache(); // enable instruction cache if present
 
 	gPwr.init();
+
+	gFlash.Init();
 
 	// setup clock configuration for maximal speed
 	gClkTree.init();
