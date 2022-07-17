@@ -39,7 +39,9 @@ volatile unsigned hbcounter = 0;
 
 uint8_t setupZigbeeTaskId;
 TzeBase endPoint1;
-TzcOnOffClient onOffCluster1;
+TzeBase endPoint2;
+TzcOnOffClient onOffClientCluster1;
+TzcOnOffServer onOffServerCluster1;
 
 bool flagSendNext;
 
@@ -48,7 +50,25 @@ void sendNext(THwRtc::time_t time)
   flagSendNext = true;
 }
 
+TzcOnOffServer::statusCode_t onOffServerCluster1_onCb(TzcOnOffServer::zAdr_t* adr)
+{
+  onOffServerCluster1.setAttrOnOff(true);
+  return 0;     // ZCL: SUCCESS
+}
 
+TzcOnOffServer::statusCode_t onOffServerCluster1_offCb(TzcOnOffServer::zAdr_t* adr)
+{
+  onOffServerCluster1.setAttrOnOff(false);
+  return 0;     // ZCL: SUCCESS
+}
+
+TzcOnOffServer::statusCode_t onOffServerCluster1_toggleCb(TzcOnOffServer::zAdr_t* adr)
+{
+  bool onOffState;
+  onOffServerCluster1.getAttrOnOff(onOffState);
+  onOffServerCluster1.setAttrOnOff(!onOffState);
+  return 0;     // ZCL: SUCCESS
+}
 
 void setupZigbeeTask()
 {
@@ -75,10 +95,21 @@ void setupZigbeeTask()
   gZigbee.setAttrPowerSource(4);    // DC Source
 
   // setup endpoints and clusters
-  endPoint1.setEpId(12);
-  endPoint1.addCluster(&onOffCluster1);
-  gZigbee.addEndpoint(&endPoint1);
+  endPoint1.setEpId(1);
+  endPoint1.addCluster(&onOffClientCluster1);
 
+  onOffServerCluster1.setOffCmdInCb(onOffServerCluster1_offCb);
+  onOffServerCluster1.setOnCmdInCb(onOffServerCluster1_onCb);
+  onOffServerCluster1.setToggleCmdInCb(onOffServerCluster1_toggleCb);
+
+  endPoint2.setEpId(2);
+  endPoint2.addCluster(&onOffServerCluster1);
+
+  gZigbee.addEndpoint(&endPoint1);
+  gZigbee.addEndpoint(&endPoint2);
+
+  // config stack with endpoints and clusters,
+  // also calls from each endpoint and cluster the init function
   gZigbee.config();
 
   TRACECPU1("join network\r\n");
@@ -98,7 +129,7 @@ void setupZigbeeTask()
     flagSendNext = false;
     gSeq.waitForEvent(&flagSendNext);
     TRACECPU1("send toggle\r\n");
-    onOffCluster1.sendCmdToggle();
+    onOffClientCluster1.sendCmdToggle();
   }
 }
 
