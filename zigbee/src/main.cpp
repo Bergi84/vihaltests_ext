@@ -124,17 +124,9 @@ void setupZigbeeTask()
   gZigbee.join();
   gSeq.waitForEvent(&gZigbee.flagJoined);
 
-  // it seems the stack needs after a persistent startup 10s or more before it can handle
-  // commands
+  // send every 5sec a toggle cmd
   uint8_t sendTimer;
   gTs.create(sendTimer, sendNext, true);
-  gTs.start(sendTimer, 15000);
-
-  flagSendNext = false;
-  gSeq.waitForEvent(&flagSendNext);
-
-
-  // send every 5sec a toggle cmd
   gTs.start(sendTimer, 5000);
 
   while(1)
