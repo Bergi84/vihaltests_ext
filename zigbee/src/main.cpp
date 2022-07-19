@@ -52,6 +52,12 @@ void sendNext(THwRtc::time_t time)
   flagSendNext = true;
 }
 
+void resetNwk(THwRtc::time_t time)
+{
+  TRACECPU1("search new network\r\n")
+  gZigbee.joinNewNwk();
+}
+
 TzcOnOffServer::statusCode_t onOffServerCluster1_onCb(TzcOnOffServer::zAdr_t* adr)
 {
   onOffServerCluster1.setAttrOnOff(true);
@@ -121,7 +127,7 @@ void setupZigbeeTask()
 
   // set device type and join a network
   gZigbee.setDeviceType(TzdBase::DT_Router);
-  gZigbee.join();
+  gZigbee.startup();
   gSeq.waitForEvent(&gZigbee.flagJoined);
 
   // send every 5sec a toggle cmd
@@ -129,12 +135,21 @@ void setupZigbeeTask()
   gTs.create(sendTimer, sendNext, true);
   gTs.start(sendTimer, 5000);
 
+
+/*
+ * this code is only for reset testing
+ * resets after 60sec the network connection
+  uint8_t resetTimer;
+  gTs.create(resetTimer, resetNwk, false);
+  gTs.start(resetTimer, 60000);
+*/
   while(1)
   {
     flagSendNext = false;
     gSeq.waitForEvent(&flagSendNext);
-    TRACECPU1("send toggle\r\n");
-    onOffClientCluster1.sendCmdToggle();
+
+    if(onOffClientCluster1.sendCmdToggle())
+      TRACECPU1("send toggle\r\n");
   }
 }
 
