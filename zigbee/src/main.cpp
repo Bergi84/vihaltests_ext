@@ -58,27 +58,27 @@ void resetNwk(THwRtc::time_t time)
   gZigbee.joinNewNwk();
 }
 
-TzcOnOffServer::statusCode_t onOffServerCluster1_onCb(TzcOnOffServer::zAdr_t* adr)
+TzcOnOffServer::zclStatusCode_t onOffServerCluster1_onCb(TzcOnOffServer::zAdr_t* adr)
 {
   onOffServerCluster1.setAttrOnOff(true);
   TRACECPU1("recieved cmd on\r\n");
-  return 0;     // ZCL: SUCCESS
+  return TzcOnOffServer::ZCL_STATUS_SUCCESS;
 }
 
-TzcOnOffServer::statusCode_t onOffServerCluster1_offCb(TzcOnOffServer::zAdr_t* adr)
+TzcOnOffServer::zclStatusCode_t onOffServerCluster1_offCb(TzcOnOffServer::zAdr_t* adr)
 {
   onOffServerCluster1.setAttrOnOff(false);
   TRACECPU1("recieved cmd off\r\n");
-  return 0;     // ZCL: SUCCESS
+  return TzcOnOffServer::ZCL_STATUS_SUCCESS;
 }
 
-TzcOnOffServer::statusCode_t onOffServerCluster1_toggleCb(TzcOnOffServer::zAdr_t* adr)
+TzcOnOffServer::zclStatusCode_t onOffServerCluster1_toggleCb(TzcOnOffServer::zAdr_t* adr)
 {
   TRACECPU1("recieved cmd toggle\r\n");
   bool onOffState;
   onOffServerCluster1.getAttrOnOff(onOffState);
   onOffServerCluster1.setAttrOnOff(!onOffState);
-  return 0;     // ZCL: SUCCESS
+  return TzcOnOffServer::ZCL_STATUS_SUCCESS;
 }
 
 void setupZigbeeTask()
@@ -109,15 +109,18 @@ void setupZigbeeTask()
   endPoint1.setEpId(1);
   endPoint1.addCluster(&onOffClientCluster1);
 
-  onOffServerCluster1.setOffCmdInCb(onOffServerCluster1_offCb);
-  onOffServerCluster1.setOnCmdInCb(onOffServerCluster1_onCb);
-  onOffServerCluster1.setToggleCmdInCb(onOffServerCluster1_toggleCb);
+  onOffServerCluster1.setCmdOffCb(onOffServerCluster1_offCb);
+  onOffServerCluster1.setCmdOnCb(onOffServerCluster1_onCb);
+  onOffServerCluster1.setCmdTogCb(onOffServerCluster1_toggleCb);
 
   endPoint2.setEpId(2);
   endPoint2.addCluster(&onOffServerCluster1);
 
   gZigbee.addEndpoint(&endPoint1);
   gZigbee.addEndpoint(&endPoint2);
+
+  if(gZigbee.setTxPwr(6))
+    TRACECPU1("set TX power to maximum\r\n");
 
   // config stack with endpoints and clusters,
   // also calls from each endpoint and cluster the init function
@@ -136,13 +139,13 @@ void setupZigbeeTask()
   gTs.start(sendTimer, 5000);
 
 
-/*
- * this code is only for reset testing
- * resets after 60sec the network connection
-  uint8_t resetTimer;
-  gTs.create(resetTimer, resetNwk, false);
-  gTs.start(resetTimer, 60000);
-*/
+
+// this code is only for reset testing
+// resets after 60sec the network connection
+//  uint8_t resetTimer;
+//  gTs.create(resetTimer, resetNwk, false);
+//  gTs.start(resetTimer, 60000);
+
   while(1)
   {
     flagSendNext = false;
